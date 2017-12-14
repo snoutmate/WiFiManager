@@ -268,7 +268,7 @@ int WiFiManager::connectWifi(String ssid, String pass) {
     }
 
     //not connected, test known APs
-    if (waitForConnectResult(_connectTimeout ? 10000 : _connectTimeout) != WL_CONNECTED && _apList_size) {
+    if (waitForConnectResult(_connectTimeout ? _connectTimeout : 10000) != WL_CONNECTED && _apList_size) {
       DEBUG_WM(F("Scan for known APs"));
       int n = WiFi.scanNetworks();
       if (n == 0) {
@@ -293,8 +293,8 @@ int WiFiManager::connectWifi(String ssid, String pass) {
         }
       }
     }
-  }				
-				
+  }
+
   int connRes = waitForConnectResult();
   DEBUG_WM ("Connection result: ");
   DEBUG_WM ( connRes );
@@ -450,10 +450,10 @@ void WiFiManager::handleRoot() {
   page += FPSTR(HTTP_STYLE);
   page += _customHeadElement;
   page += FPSTR(HTTP_HEAD_END);
-  page += "<h1>";
+  page += F("<h1>Cryptoclock</h1>");
+  page += "<h3>";
   page += _apName;
-  page += "</h1>";
-  page += F("<h3>WiFiManager</h3>");
+  page += "</h3>";
   page += FPSTR(HTTP_PORTAL_OPTIONS);
   page += FPSTR(HTTP_END);
 
@@ -528,6 +528,7 @@ void WiFiManager::handleWifi(boolean scan) {
           String item = FPSTR(HTTP_ITEM);
           String rssiQ;
           rssiQ += quality;
+          rssiQ += "%";
           item.replace("{v}", WiFi.SSID(indices[i]));
           item.replace("{r}", rssiQ);
           if (WiFi.encryptionType(indices[i]) != ENC_TYPE_NONE) {
@@ -543,7 +544,9 @@ void WiFiManager::handleWifi(boolean scan) {
         }
 
       }
-	  // show saved networks
+
+      // show saved networks
+      page += FPSTR(HTTP_SAVED_APS);
       for (int j = 0; j < _apList_size; j++) {
         String item = FPSTR(HTTP_ITEM);
         item.replace("{v}", _apList[j].ssid);
@@ -556,7 +559,7 @@ void WiFiManager::handleWifi(boolean scan) {
         page += item;
         delay(0);
       }
-      
+
       page += "<br/>";
     }
   }
@@ -759,7 +762,7 @@ void WiFiManager::handleDelete() {
   DEBUG_WM(F("WiFi delete"));
 
   String ssid = server->arg("s");
-  
+
   // search SSID
   int j;
   for (j = 0; j < _apList_size; j++) {
@@ -774,7 +777,7 @@ void WiFiManager::handleDelete() {
       _apList[j].pass = _apList[j+1].pass;
     }
   }
-  
+
   handleWifi(true);
 }
 

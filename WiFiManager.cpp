@@ -705,6 +705,9 @@ void WiFiManager::handleInfo() {
   page += _customHeadElement;
   page += FPSTR(HTTP_HEAD_END);
   page += F("<dl>");
+  page += F("<dt>Firmware ID</dt><dd>");
+  page += ESP.getSketchMD5();
+  page += F("</dd>");
   page += F("<dt>Chip ID</dt><dd>");
   page += ESP.getChipId();
   page += F("</dd>");

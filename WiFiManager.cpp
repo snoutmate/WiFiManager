@@ -34,7 +34,7 @@ void WiFiManagerParameter::init(const char *id, const char *placeholder, const c
   _placeholder = placeholder;
   _length = length;
   _value = new char[length + 1];
-  for (int i = 0; i < length; i++) {
+  for (int i = 0; i < length + 1; i++) {
     _value[i] = 0;
   }
   if (defaultValue != NULL) {
@@ -42,6 +42,12 @@ void WiFiManagerParameter::init(const char *id, const char *placeholder, const c
   }
 
   _customHTML = custom;
+}
+
+WiFiManagerParameter::~WiFiManagerParameter() {
+  if (_value != NULL) {
+    delete[] _value;
+  }
 }
 
 const char* WiFiManagerParameter::getValue() {
@@ -205,7 +211,12 @@ boolean  WiFiManager::startConfigPortal(char const *apName, char const *apPasswo
 
       // using user-provided  _ssid, _pass in place of system-stored ssid and pass
       if (connectWifi(_ssid, _pass) != WL_CONNECTED) {
-        DEBUG_WM(F("Failed to connect."));
+        DEBUG_WM(F("Failed to connect to new AP, restarting"));
+        if ( _savecallback != NULL)
+          _savecallback();
+
+        resetSettings();
+        ESP.restart();
       } else {
         //connected
         WiFi.mode(WIFI_STA);
@@ -651,7 +662,7 @@ void WiFiManager::handleWifiSave() {
     //read parameter
     String value = server->arg(_params[i]->getID()).c_str();
     //store it in array
-    value.toCharArray(_params[i]->_value, _params[i]->_length);
+    value.toCharArray(_params[i]->_value, _params[i]->_length + 1);
     DEBUG_WM(F("Parameter"));
     DEBUG_WM(_params[i]->getID());
     DEBUG_WM(value);
@@ -780,6 +791,9 @@ void WiFiManager::handleDelete() {
       _apList[j].pass = _apList[j+1].pass;
     }
   }
+
+  if ( _savecallback != NULL)
+    _savecallback();
 
   handleWifi(true);
 }
